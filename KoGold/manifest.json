@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "KoGold",
+  "version": "1.0",
+  "description": "A cool looking theme editor for pekora.zip!",
+  "icons": {
+    "16": "icon16.png",
+    "32": "icon32.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon16.png",
+      "32": "icon32.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    },
+    "default_title": "KoGold"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.pekora.zip/*"],
+      "js": ["content.js","content-core.js", "content-themes.js", "content-ui.js", "content-paw.js"]
+    }
+  ]
+}
