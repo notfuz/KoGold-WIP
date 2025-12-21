@@ -11,6 +11,7 @@ I am planning on mergin an existing trading extention made by arz (owner of koro
 * And some extra bug fixes.
 
 # Plans
+* Auto update
 * Username icons
 * More themes
 * Animated themes
