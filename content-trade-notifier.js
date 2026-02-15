@@ -511,7 +511,180 @@
         return c;
     }
 
-    function togglePanel() { panelOpen = !panelOpen; }
+    function togglePanel() {
+        const existing = document.getElementById('tn-panel');
+        if (!existing) {
+            const panel = document.createElement('div');
+            panel.id = 'tn-panel';
+            panel.style.cssText = `position: fixed;
+                right: 16px;
+                top: 56px;
+                width: 480px;
+                max-height: 80vh;
+                overflow: auto;
+                z-index: 999999;
+                background: #222222;
+                border: 2px solid #555555;
+                padding: 8px;
+                border-radius: 4px;
+                box-shadow: 0 0 30px rgba(0,0,0,0.9);
+            `;
+
+            const header = document.createElement('div');
+            header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-bottom:1px solid #444;margin-bottom:8px;color:#ffd166;font-weight:700;';
+            header.textContent = 'Trade Notifier';
+
+            const closeBtn = document.createElement('button');
+            closeBtn.textContent = 'Close';
+            closeBtn.style.cssText = 'background:#333333;color:#ffd166;border:2px solid #555555;padding:4px 8px;cursor:pointer;font-weight:700;';
+            closeBtn.addEventListener('click', function () { panel.style.display = 'none'; panelOpen = false; });
+            header.appendChild(closeBtn);
+
+            const content = document.createElement('div');
+            content.id = 'tn-panel-list';
+            content.style.cssText = 'color:#e0e0e0; font-size:13px;';
+            content.innerHTML = '<div style="padding:8px;color:#999">Loading trades...</div>';
+
+            panel.appendChild(header);
+            panel.appendChild(content);
+            document.body.appendChild(panel);
+            panelOpen = true;
+            return;
+        }
+
+        if (existing.style.display === 'none' || existing.style.display === '') {
+            existing.style.display = 'block';
+            panelOpen = true;
+            renderPanel();
+        } else {
+            existing.style.display = 'none';
+            panelOpen = false;
+        }
+    }
+
+    async function acceptTrade(tradeId, btn) {
+        try {
+            btn.disabled = true;
+            btn.textContent = 'Accepting...';
+            await apiPost(EP_DETAIL + '/' + tradeId + '/accept');
+            btn.textContent = 'Accepted';
+            if (settings.sound) playSound();
+            setTimeout(() => { if (btn) btn.disabled = false; }, 1500);
+            if (panelOpen) renderPanel();
+        } catch (e) {
+            console.error('[Trade Notifier] Accept error:', e.message);
+            btn.textContent = 'Accept';
+            btn.disabled = false;
+        }
+    }
+
+    async function declineTrade(tradeId, btn) {
+        try {
+            btn.disabled = true;
+            btn.textContent = 'Declining...';
+            await apiPost(EP_DETAIL + '/' + tradeId + '/decline');
+            btn.textContent = 'Declined';
+            if (settings.sound) playDeclineSound();
+            setTimeout(() => { if (btn) btn.disabled = false; }, 1500);
+            if (panelOpen) renderPanel();
+        } catch (e) {
+            console.error('[Trade Notifier] Decline error:', e.message);
+            btn.textContent = 'Decline';
+            btn.disabled = false;
+        }
+    }
+
+    function blockUser(userId, username, btn) {
+        try {
+            addBlocked(userId, username);
+            btn.textContent = 'Blocked';
+            btn.disabled = true;
+            if (settings.sound) playSpamSound();
+            if (panelOpen) renderPanel();
+        } catch (e) { console.error('Block error', e); }
+    }
+
+    async function showTradeDetails(tradeId, container) {
+        try {
+            container.innerHTML = '<div style="padding:8px;color:#999">Loading details...</div>';
+            const det = await fetchDetail(tradeId);
+            const ids = collectAssetIds(det);
+            const thumbs = await fetchAssetThumbs(ids);
+            const sending = splitOffers(det, authUserId).sending;
+            const receiving = splitOffers(det, authUserId).receiving;
+            let html = '<div style="padding:8px">';
+            html += '<div style="margin-bottom:8px;color:#ffd166;font-weight:700">Trade #' + tradeId + '</div>';
+            html += '<div style="display:flex;gap:12px">';
+            html += '<div style="flex:1">' + offerHtml(sending) + '</div>';
+            html += '<div style="flex:1">' + offerHtml(receiving) + '</div>';
+            html += '</div>';
+            html += '</div>';
+            container.innerHTML = html;
+        } catch (e) {
+            container.innerHTML = '<div style="padding:8px;color:#f66">Failed to load details</div>';
+            console.error('Details error', e);
+        }
+    }
+
+    async function renderPanel() {
+        const panel = document.getElementById('tn-panel');
+        if (!panel) return;
+        const list = document.getElementById('tn-panel-list');
+        if (!list) return;
+        list.innerHTML = '<div style="padding:8px;color:#999">Refreshing...</div>';
+        try {
+            const trades = await fetchInbound();
+            panelTrades = trades;
+            if (!trades || !trades.length) {
+                list.innerHTML = '<div style="padding:8px;color:#999">No inbound trades</div>';
+                return;
+            }
+            list.innerHTML = '';
+            for (const t of trades) {
+                const uid = t.user.id;
+                const username = t.user.displayName || t.user.name || 'Unknown';
+                const head = panelHeads[uid] || '';
+                const item = document.createElement('div');
+                item.style.cssText = 'border:1px solid #444;padding:8px;margin-bottom:8px;background:#2a2a2a;';
+                const top = document.createElement('div');
+                top.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px';
+                const left = document.createElement('div');
+                left.style.cssText = 'display:flex;gap:8px;align-items:center';
+                const av = document.createElement('img'); av.src = head || ITEM_FB; av.style.width = '40px'; av.style.height = '40px'; av.style.borderRadius = '50%'; av.onerror = function () { this.src = ITEM_FB; };
+                const info = document.createElement('div'); info.style.cssText = 'color:#e0e0e0'; info.innerHTML = '<div style="font-weight:700;color:#ffd166">' + esc(username) + '</div><div style="color:#999;font-size:12px">Trade #' + t.id + ' — ' + ago(t.created) + '</div>';
+                left.appendChild(av); left.appendChild(info);
+                top.appendChild(left);
+
+                const right = document.createElement('div');
+                right.style.cssText = 'display:flex;gap:6px';
+                const accept = document.createElement('button'); accept.textContent = 'Accept'; accept.style.cssText = 'background:#155724;color:#d4ffd6;border:1px solid #2e7d32;padding:6px;cursor:pointer;font-weight:700';
+                accept.addEventListener('click', () => acceptTrade(t.id, accept));
+                const decline = document.createElement('button'); decline.textContent = 'Decline'; decline.style.cssText = 'background:#3a1f1f;color:#ffd6d6;border:1px solid #7d2e2e;padding:6px;cursor:pointer;font-weight:700';
+                decline.addEventListener('click', () => declineTrade(t.id, decline));
+                const block = document.createElement('button'); block.textContent = isBlocked(uid) ? 'Blocked' : 'Block'; block.disabled = isBlocked(uid); block.style.cssText = 'background:#333333;color:#ffd166;border:1px solid #555;padding:6px;cursor:pointer;font-weight:700';
+                block.addEventListener('click', () => blockUser(uid, username, block));
+                const detailsBtn = document.createElement('button'); detailsBtn.textContent = 'Details'; detailsBtn.style.cssText = 'background:#222;color:#e0e0e0;border:1px solid #444;padding:6px;cursor:pointer';
+                right.appendChild(detailsBtn);
+                right.appendChild(accept); right.appendChild(decline); right.appendChild(block);
+                top.appendChild(right);
+
+                item.appendChild(top);
+
+                const detContainer = document.createElement('div'); detContainer.style.cssText = 'margin-top:8px;display:none';
+                item.appendChild(detContainer);
+
+                detailsBtn.addEventListener('click', async () => {
+                    if (detContainer.style.display === 'none') { detContainer.style.display = 'block'; await showTradeDetails(t.id, detContainer); detailsBtn.textContent = 'Hide'; }
+                    else { detContainer.style.display = 'none'; detailsBtn.textContent = 'Details'; }
+                });
+
+                list.appendChild(item);
+            }
+        } catch (e) {
+            list.innerHTML = '<div style="padding:8px;color:#f66">Failed to load trades</div>';
+            console.error('[Trade Notifier] renderPanel error', e);
+        }
+    }
 
     async function poll() {
         try {

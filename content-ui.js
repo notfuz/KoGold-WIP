@@ -37,13 +37,13 @@
       panel.style.top = '50%';
       panel.style.transform = 'translate(-50%,-50%)';
       panel.style.zIndex = 99999;
-      panel.style.display = 'none';
       panel.style.width = '900px';
       panel.style.height = '600px';
-      panel.style.background = '#222222ff';
+      panel.style.background = '#2a2a2a';
       panel.style.color = '#000000';
       panel.style.padding = '0';
-      panel.style.display = 'flex';
+      // panel stays hidden until toggled
+      // (avoid setting to 'flex' here to prevent first-click hide/show bug)
       panel.style.flexDirection = 'column';
       panel.style.boxShadow = '0 0 30px rgba(0, 0, 0, 0.95), 0 0 60px rgba(0, 0, 0, 0.8)';
       panel.style.borderRadius = '0px';
@@ -189,15 +189,41 @@
       });
       sidebar.appendChild(creditsBtn);
 
+      // Support Development button in sidebar
+      const supportBtn = document.createElement('button');
+      supportBtn.id = 'kogold-support-btn';
+      supportBtn.textContent = 'Support Development';
+      supportBtn.style.cssText = `
+        color: #ffd166;
+        background: #333333;
+        border: 2px solid #555555;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        margin: 0 8px;
+        text-align: left;
+      `;
+      supportBtn.addEventListener('mousedown', () => { supportBtn.style.borderStyle = 'inset'; });
+      supportBtn.addEventListener('mouseup', () => { supportBtn.style.borderStyle = 'solid'; });
+      supportBtn.addEventListener('mouseleave', () => { supportBtn.style.borderStyle = 'solid'; });
+      supportBtn.addEventListener('click', (e) => { 
+        e.stopPropagation();
+        document.querySelectorAll('[id$="-list"]').forEach(el => el.style.display = 'none');
+        const list = document.getElementById('kogold-support-list');
+        if (list) list.style.display = 'block';
+      });
+      sidebar.insertBefore(supportBtn, creditsBtn);
+
       mainContainer.appendChild(sidebar);
 
       // Content area
       const content = document.createElement('div');
       content.id = 'kogold-panel-content';
       content.style.cssText = `
-        flex: 1;
+        flex: 1 1 0%;
         overflow: hidden;
-        display: flex;
+        display: block;
         flex-direction: column;
       `;
 
@@ -269,8 +295,13 @@
         });
         toggles.appendChild(apiRow);
 
-        // Trade Notifier setting
+        // Trade Notifier setting - DISABLED FOR NOW
         const { row: tradeNotifierRow, checkbox: tradeNotifierCheckbox } = createToggleSetting('Trade Notifier (Still being worked on)', 'kogold:tradeNotifier', false);
+        // Disable the Trade Notifier toggle temporarily
+        tradeNotifierCheckbox.disabled = true;
+        tradeNotifierCheckbox.style.opacity = '0.5';
+        tradeNotifierRow.style.opacity = '0.5';
+        tradeNotifierRow.style.pointerEvents = 'none';
         tradeNotifierCheckbox.addEventListener('change', () => {
           localStorage.setItem('kogold:tradeNotifier', tradeNotifierCheckbox.checked);
           if (tradeNotifierCheckbox.checked) {
@@ -325,6 +356,109 @@
       themesList.textContent = 'Loading themes...';
       content.appendChild(themesList);
 
+      // Support Development section (Tier buttons)
+      const supportDiv = document.createElement('div');
+      supportDiv.id = 'kogold-support-list';
+      supportDiv.style.cssText = `
+        display: none;
+        padding: 16px;
+        background: #2a2a2a;
+        overflow-y: auto;
+        border-top: 2px solid #444;
+        flex: 1;
+      `;
+
+      const supportTitle = document.createElement('div');
+      supportTitle.textContent = 'Support Development';
+      supportTitle.style.cssText = 'color:#ffd166;font-weight:700;font-size:13px;';
+      supportDiv.appendChild(supportTitle);
+
+      const tierRow = document.createElement('div');
+      tierRow.style.cssText = 'display:flex;gap:8px;align-items:center';
+
+      // Helper to create tier buttons
+      function makeTierButton(label, href, color) {
+        const btn = document.createElement('button');
+        btn.textContent = label;
+        btn.style.cssText = `
+          padding: 10px 14px;
+          font-weight:700;
+          font-size:13px;
+          cursor:pointer;
+          border:2px solid rgba(0,0,0,0.3);
+          border-radius:6px;
+          background:${color || '#333333'};
+          color:#fff;
+        `;
+        if (href) {
+          btn.addEventListener('click', (e) => { e.stopPropagation(); window.open(href, '_blank'); });
+        }
+        return btn;
+      }
+
+      // Tier buttons (all currently point to the provided gamepass URL)
+      const tier1Url = 'https://www.pekora.zip/catalog/436966/KoGold-Tier-1';
+      const tier2Url = 'https://www.pekora.zip/catalog/436968/KoGold-Tier-2';
+      const tier3Url = 'https://www.pekora.zip/catalog/436970/KoGold-Tier-3';
+      const tier1Btn = makeTierButton('Tier 1', tier1Url, '#2e7d32');
+      const tier2Btn = makeTierButton('Tier 2', tier2Url, '#ab47bc');
+      const tier3Btn = makeTierButton('Tier 3', tier3Url, '#2196f3');
+
+      tierRow.appendChild(tier1Btn);
+      tierRow.appendChild(tier2Btn);
+      tierRow.appendChild(tier3Btn);
+      supportDiv.appendChild(tierRow);
+
+      // Ownership check (best-effort)
+      (async function checkOwnership() {
+        try {
+          // get authenticated user id
+          const authResp = await fetch('https://www.pekora.zip/apisite/users/v1/users/authenticated', { credentials: 'include' });
+          if (!authResp.ok) return;
+          const auth = await authResp.json();
+          const userId = auth && auth.id;
+          if (!userId) return;
+
+          async function checkAssetOwned(assetId) {
+            try {
+              // Best-effort ownership endpoint similar to Roblox
+              const url = `https://www.pekora.zip/ownership/hasasset?userId=${userId}&assetId=${assetId}`;
+              const r = await fetch(url, { credentials: 'include' });
+              if (!r.ok) return false;
+              const txt = await r.text();
+              // endpoint may return plain true/false or JSON
+              if (txt.trim() === 'true') return true;
+              if (txt.trim() === 'false') return false;
+              try { const j = JSON.parse(txt); return !!j; } catch { return false; }
+            } catch (e) { return false; }
+          }
+
+          const ownedTier1 = await checkAssetOwned(436966);
+          if (ownedTier1) {
+            tier1Btn.textContent = 'Tier 1 — Owned';
+            tier1Btn.disabled = true;
+            tier1Btn.style.opacity = '0.8';
+            tier1Btn.addEventListener('click', (e) => e.stopPropagation());
+          }
+          const ownedTier2 = await checkAssetOwned(436968);
+          if (ownedTier2) {
+            tier2Btn.textContent = 'Tier 2 — Owned';
+            tier2Btn.disabled = true;
+            tier2Btn.style.opacity = '0.8';
+            tier2Btn.addEventListener('click', (e) => e.stopPropagation());
+          }
+          const ownedTier3 = await checkAssetOwned(436970);
+          if (ownedTier3) {
+            tier3Btn.textContent = 'Tier 3 — Owned';
+            tier3Btn.disabled = true;
+            tier3Btn.style.opacity = '0.8';
+            tier3Btn.addEventListener('click', (e) => e.stopPropagation());
+          }
+        } catch (e) { console.warn('Support ownership check failed', e); }
+      })();
+
+      content.appendChild(supportDiv);
+
       const creditsList = document.createElement('div');
       creditsList.id = 'kogold-credits-list';
       creditsList.style.cssText = `
@@ -336,13 +470,46 @@
         color: #e0e0e0;
       `;
       creditsList.innerHTML = `
-        <div style="text-align: center; margin-bottom: 16px;">
+        <div style="text-align: center; margin-bottom: 12px;">
           <h3 style="color: #ffd166; margin: 0 0 4px 0; font-size: 16px;">KoGold Credits</h3>
-          <p style="color: #888; margin: 0; font-size: 11px;"></p>
+          <p style="color: #888; margin: 0; font-size: 11px;">Thanks to everyone who contributed and tested.</p>
         </div>
-        <div style="margin-top: 16px;">
-          <h4 style="color: #ffd166; margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase;">Coming Soon</h4>
-          <p style="color: #888; font-size: 12px;">More credits and contributors will be listed here.</p>
+        <div style="margin-top: 8px; display:flex; gap:12px; flex-direction:column;">
+          <div>
+            <h4 style="color: #ffd166; margin: 0 0 8px 0; font-size: 12px; text-transform: uppercase;">Owner</h4>
+            <div style="color:#e0e0e0; font-size:13px; padding:8px; border:2px solid #555555; background:#2a2a2a;">
+              <div style="font-weight:700; color:#ffd166;">fuz</div>
+              <div style="color:#999; font-size:12px;">ID: 14159</div>
+            </div>
+          </div>
+
+          <div>
+            <h4 style="color: #ffd166; margin: 8px 0 8px 0; font-size: 12px; text-transform: uppercase;">Other Extension Owners</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="padding:8px;border:2px solid #555555;background:#2a2a2a;color:#e0e0e0;">
+                <div style="font-weight:700;">this guy</div>
+                <div style="color:#999;font-size:12px;">ID: 1234</div>
+              </div>
+              <div style="padding:8px;border:2px solid #555555;background:#2a2a2a;color:#e0e0e0;">
+                <div style="font-weight:700;">this guy aswell</div>
+                <div style="color:#999;font-size:12px;">ID: 12345</div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h4 style="color: #ffd166; margin: 8px 0 8px 0; font-size: 12px; text-transform: uppercase;">Testers</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="padding:8px;border:2px solid #555555;background:#2a2a2a;color:#e0e0e0;">
+                <div style="font-weight:700;">this guy</div>
+                <div style="color:#999;font-size:12px;">ID: 234</div>
+              </div>
+              <div style="padding:8px;border:2px solid #555555;background:#2a2a2a;color:#e0e0e0;">
+                <div style="font-weight:700;">look at this guy</div>
+                <div style="color:#999;font-size:12px;">ID: 234567</div>
+              </div>
+            </div>
+          </div>
         </div>
       `;
       content.appendChild(creditsList);
@@ -364,6 +531,8 @@
       const panel = createPanel(); 
       const backdrop = document.getElementById('kogold-backdrop');
       if (panel.style.display === 'none') {
+        // ensure no content list is shown by default
+        document.querySelectorAll('[id$="-list"]').forEach(el => el.style.display = 'none');
         panel.style.display = 'flex';
         if (backdrop) backdrop.style.display = 'block';
       } else {
@@ -378,7 +547,10 @@
       const li = document.createElement('li'); li.className = 'kogold-item';
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'kogold-button'; btn.textContent = 'KoGold';
       btn.style.color = '#ffd166'; btn.style.clear = 'both'; btn.style.width = '100%'; btn.style.border = 'none'; btn.style.cursor = 'pointer'; btn.style.display = 'block'; btn.style.padding = '10px 12px'; btn.style.fontSize = '16px'; btn.style.background = 'transparent'; btn.style.textAlign = 'left'; btn.style.lineHeight = '1.42857'; btn.style.userSelect = 'none'; btn.style.whiteSpace = 'nowrap'; btn.style.textDecoration = 'none';
-      btn.addEventListener('click', (e) => { e.stopPropagation(); togglePanelForButton(); });
+      // Use capturing pointerdown to open the panel immediately and prevent other handlers
+      btn.addEventListener('pointerdown', function (e) { e.stopPropagation(); e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); togglePanelForButton(); }, true);
+      // also handle keyboard activation
+      btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanelForButton(); } });
       li.appendChild(btn); ul.appendChild(li);
     }
 
