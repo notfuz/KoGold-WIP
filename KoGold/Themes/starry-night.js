@@ -65,55 +65,6 @@ window.CONTAINER_EDITS = [
   },
 
   {
-    selector: "[class*='col-12 col-lg-3 advertisementContainer-0-2']",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: ".row.undefined",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: ".skyScraperLeft-0-2-33",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: ".skyScraperRight-0-2-34",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: "[class*='col-12 feedNews-0-2']",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: "[class*='adWrapper-0-2'][class*='skyscraperAdContainer-0-2']",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
-    selector: "[class*='adWrapper-0-2'][class*='bannerAdContainer-0-2']",
-    styles: {
-      display: "none"
-    }
-  },
-
-  {
     selector: "[class*='col-12 col-lg-9 uselessFuckingClass-0-2']",
     styles: {
       width: "100%"

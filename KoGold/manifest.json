@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "KoGold",
-  "version": "1.0",
-  "description": "A cool looking theme editor for pekora.zip!",
+  "version": "7.2",
+  "description": "A cool looking plugin for pekora.zip! Includes plugins made by others such as the Trade Notifier by cooper.",
   "icons": {
     "16": "icon16.png",
     "32": "icon32.png",
@@ -21,7 +21,7 @@
   "content_scripts": [
     {
       "matches": ["https://www.pekora.zip/*"],
-      "js": ["content.js","content-core.js", "content-themes.js", "content-ui.js", "content-paw.js"]
+      "js": ["content.js","content-core.js", "content-themes.js", "content-settings.js", "content-ui.js", "content-paw.js", "content-api-purchaser.js", "content-banned-viewer.js", "content-trade-notifier.js"]
     }
   ]
 }

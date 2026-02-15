@@ -16,26 +16,6 @@
          background: 'url(https://i.imgur.com/Vff8cxn.jpeg)' } 
     },
     {
-      selector: "[class*='advertisementContainer-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='skyScraperLeft-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='skyScraperRight-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='feedNews-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='adWrapper-0-2']",
-      styles: { display: "none" }
-    },
-    {
       selector: "[class*='uselessFuckingClass-0-2']",
       styles: { width: "100%" }
     },
@@ -223,13 +203,47 @@
     listEl.textContent = 'Loading themes...';
     const themes = await loadThemesManifest();
     listEl.innerHTML = '';
+    
     if (!themes.length) { listEl.textContent = 'No themes found.'; return; }
+    
     const selectedFile = localStorage.getItem('kogold:selectedTheme');
     themes.forEach(t => {
       const b = document.createElement('button');
       b.textContent = t.name || t.file || 'unnamed';
       b.style.display = 'block';
-      if (t.file === selectedFile) { b.setAttribute('aria-pressed', 'true'); b.style.fontWeight = '600'; } else { b.setAttribute('aria-pressed', 'false'); b.style.fontWeight = 'normal'; }
+      b.style.width = '100%';
+      b.style.padding = '8px 10px';
+      b.style.marginBottom = '6px';
+      b.style.border = '2px solid #555555';
+      b.style.cursor = 'pointer';
+      b.style.fontSize = '13px';
+      b.style.textAlign = 'left';
+      b.style.userSelect = 'none';
+      b.style.fontWeight = 'bold';
+      
+      if (t.file === selectedFile) { 
+        b.setAttribute('aria-pressed', 'true'); 
+        b.style.background = '#ffd166';
+        b.style.color = '#000000';
+        b.style.borderColor = '#ffb333';
+      } else { 
+        b.setAttribute('aria-pressed', 'false'); 
+        b.style.background = '#333333';
+        b.style.color = '#e0e0e0';
+      }
+      
+      b.addEventListener('mousedown', () => {
+        b.style.borderStyle = 'inset';
+      });
+      
+      b.addEventListener('mouseup', () => {
+        b.style.borderStyle = 'solid';
+      });
+      
+      b.addEventListener('mouseleave', () => {
+        b.style.borderStyle = 'solid';
+      });
+      
       b.addEventListener('click', async (e) => {
         e.stopPropagation();
         try {
@@ -241,6 +255,51 @@
       });
       listEl.appendChild(b);
     });
+
+    // Add reset button at the end
+    const resetBtn = document.createElement('button');
+    resetBtn.id = 'kogold-reset-btn';
+    resetBtn.textContent = 'Reset Theme';
+    resetBtn.style.display = 'block';
+    resetBtn.style.width = '100%';
+    resetBtn.style.padding = '8px 10px';
+    resetBtn.style.marginTop = '6px';
+    resetBtn.style.border = '2px solid #555555';
+    resetBtn.style.cursor = 'pointer';
+    resetBtn.style.fontSize = '13px';
+    resetBtn.style.textAlign = 'left';
+    resetBtn.style.userSelect = 'none';
+    resetBtn.style.fontWeight = 'bold';
+    resetBtn.style.background = '#333333';
+    resetBtn.style.color = '#e0e0e0';
+
+    resetBtn.addEventListener('mousedown', () => {
+      resetBtn.style.borderStyle = 'inset';
+    });
+
+    resetBtn.addEventListener('mouseup', () => {
+      resetBtn.style.borderStyle = 'solid';
+    });
+
+    resetBtn.addEventListener('mouseleave', () => {
+      resetBtn.style.borderStyle = 'solid';
+    });
+
+    resetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      try {
+        localStorage.removeItem('kogold:selectedTheme');
+        localStorage.removeItem('kogold:selectedThemeData');
+        const s = document.getElementById('kogold-theme-script'); if (s) s.remove();
+        const last = window.KoGold_lastApplied; if (last && Array.isArray(last)) { last.forEach(edit => { try { document.querySelectorAll(edit.selector).forEach(el => { if (edit.styles) Object.keys(edit.styles).forEach(key => { try { el.style[key] = ''; } catch (e) {} }); }); } catch (e) {} }); }
+        try { window.CONTAINER_EDITS = undefined; } catch (e) {}
+        if (window.KoGold_applyContainerEdits) window.KoGold_applyContainerEdits();
+        const panel = document.getElementById('kogold-panel'); if (panel) panel.style.display = 'none';
+        setTimeout(() => { try { location.reload(); } catch (e) {} }, 3000);
+      } catch (err) {}
+    });
+
+    listEl.appendChild(resetBtn);
   }
 
   (function autoLoadSavedTheme(){

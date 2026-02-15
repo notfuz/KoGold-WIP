@@ -1,9 +1,5 @@
 (function () {
-  let moved = false;
-
   function moveContainer() {
-    if (moved) return;
-
     try {
       const profileContainer = document.querySelector(
         "div[class*='profileContainer-0-2']"
@@ -14,16 +10,34 @@
       if (!candidates.length) return;
 
       let targetDiv = candidates[0];
+      
+      // Ensure the main target is styled and moved
+      try {
+        targetDiv.style.width = "100%";
+        targetDiv.style.maxWidth = "100%";
+        targetDiv.style.flex = "0 0 100%";
 
-      targetDiv.style.width = "100%";
-      targetDiv.style.maxWidth = "100%";
-      targetDiv.style.flex = "0 0 100%";
+        // Move the element to just before the profile container
+        if (!targetDiv.dataset.kogoldMoved) {
+          profileContainer.before(targetDiv);
+          targetDiv.dataset.kogoldMoved = '1';
+          console.log("[KoGold] Container moved successfully");
+        }
+      } catch (e) {
+        console.error('[KoGold] moveContainer styling/move error:', e);
+      }
 
-      profileContainer.before(targetDiv);
-
-      moved = true;
-      observer.disconnect();
-      console.log("[KoGold] Container moved successfully");
+      // Hide any duplicate candidate elements that remain elsewhere in the DOM
+      try {
+        candidates.forEach((el, idx) => {
+          if (idx === 0) return; // keep the moved one
+          if (el.dataset.kogoldHidden) return;
+          try {
+            el.dataset.kogoldHidden = '1';
+            el.style.setProperty('display', 'none', 'important');
+          } catch (e) {}
+        });
+      } catch (e) {}
     } catch (e) {
       console.error("[KoGold] moveContainer error:", e);
     }
@@ -36,6 +50,17 @@
   });
 
   moveContainer();
+
+  // Periodic check to ensure the container stays moved (in case DOM resets)
+  setInterval(moveContainer, 3000);
+})();
+
+(function(){
+  try {
+    if (window.KoGold_applyContainerEdits && window.CONTAINER_EDITS) {
+      try { window.KoGold_applyContainerEdits(); } catch(e) {}
+    }
+  } catch (e) {}
 })();
 
 (function(){
@@ -69,32 +94,15 @@
     childList: true,
     subtree: true,
   });
+
+  // Periodic check to ensure width styles stick
+  setInterval(applyWidthOnly, 3000);
 })();
 
 (function () {
   window.CONTAINER_EDITS = window.CONTAINER_EDITS || [];
 
   window.CONTAINER_EDITS.push(
-    {
-      selector: "[class*='advertisementContainer-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='skyScraperLeft-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='skyScraperRight-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='feedNews-0-2']",
-      styles: { display: "none" }
-    },
-    {
-      selector: "[class*='adWrapper-0-2']",
-      styles: { display: "none" }
-    },
     {
       selector: "[class*='uselessFuckingClass-0-2']",
       styles: { width: "100%" }
