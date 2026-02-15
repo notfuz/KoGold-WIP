@@ -1,4 +1,4 @@
-// Trade Notifier - Modified for KoGold styling
+// Trade Notifier - Modified for KoGold
 // Based on Trade Notifier by cooper (coollarper45)
 
 (function () {

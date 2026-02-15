@@ -15,24 +15,19 @@
     });
   };
 
-  // Run once initially
   applyEdits();
 
-  // Watch for new elements being added with more aggressive observation
   const observer = new MutationObserver(() => applyEdits());
   observer.observe(document.body, { childList: true, subtree: true });
 
-  // Periodic reapplication to ensure styles stick
   setInterval(applyEdits, 1500);
 
-  // Reapply on common interaction events
   ['click', 'focus', 'scroll'].forEach(event => {
     document.addEventListener(event, () => {
       setTimeout(applyEdits, 50);
     }, true);
   });
 
-  // Expose a global apply function so themes loaded later can apply edits
   window.KoGold_applyContainerEdits = function() {
     try {
       if (!window.CONTAINER_EDITS) return;
@@ -80,7 +75,6 @@
     return getScriptBase() + filename;
   }
 
-  // expose helpers globally for other split files
   window.KoGold_getResourcePath = getResourcePath;
   window.KoGold_getAssetPath = getAssetPath;
 })();

@@ -134,14 +134,12 @@
       }
     } catch (e) {}
 
-    // If manifest not present, try probing the Themes folder for known files
     const fallback = (window.KoGold_embeddedThemes || []).slice();
     const available = [];
     for (const t of fallback) {
       try {
         let url = getResourcePath(t.file) || ('Themes/' + t.file);
         if (url.indexOf && url.indexOf('invalid') !== -1) url = 'Themes/' + t.file;
-        // try a lightweight fetch to check presence (skip chrome-extension invalid URLs)
         const r = await fetch(url, { method: 'GET', cache: 'no-store' });
         if (r && r.ok) available.push(t);
       } catch (e) {}
@@ -256,7 +254,6 @@
       listEl.appendChild(b);
     });
 
-    // Add reset button at the end
     const resetBtn = document.createElement('button');
     resetBtn.id = 'kogold-reset-btn';
     resetBtn.textContent = 'Reset Theme';
@@ -322,7 +319,6 @@
     obs.observe(document.body, { childList: true, subtree: true });
   })();
 
-  // expose theme functions globally for UI to call
   window.KoGold_populateThemes = populateThemes;
   window.KoGold_injectThemeScript = injectThemeScript;
   window.KoGold_loadThemesManifest = loadThemesManifest;

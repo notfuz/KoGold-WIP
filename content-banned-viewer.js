@@ -200,7 +200,6 @@
       });
 
       if (!userResponse.ok) {
-        // 404 means user is banned/doesn't exist
         return { 
           isBanned: true,
           userId: userId,
@@ -501,7 +500,6 @@
     container.appendChild(profileCard);
   };
 
-  // Expose to global scope so content-ui.js can call it
   window.KoGold_openBannedViewer = () => {
     createBannedViewerPanel();
   };

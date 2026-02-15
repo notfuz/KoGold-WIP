@@ -12,7 +12,6 @@
       let panel = document.getElementById('kogold-panel');
       if (panel) return panel;
       
-      // Create backdrop overlay if it doesn't exist
       let backdrop = document.getElementById('kogold-backdrop');
       if (!backdrop) {
         backdrop = document.createElement('div');
@@ -42,8 +41,6 @@
       panel.style.background = '#2a2a2a';
       panel.style.color = '#000000';
       panel.style.padding = '0';
-      // panel stays hidden until toggled
-      // (avoid setting to 'flex' here to prevent first-click hide/show bug)
       panel.style.flexDirection = 'column';
       panel.style.boxShadow = '0 0 30px rgba(0, 0, 0, 0.95), 0 0 60px rgba(0, 0, 0, 0.8)';
       panel.style.borderRadius = '0px';
@@ -297,7 +294,6 @@
 
         // Trade Notifier setting - DISABLED FOR NOW
         const { row: tradeNotifierRow, checkbox: tradeNotifierCheckbox } = createToggleSetting('Trade Notifier (Still being worked on)', 'kogold:tradeNotifier', false);
-        // Disable the Trade Notifier toggle temporarily
         tradeNotifierCheckbox.disabled = true;
         tradeNotifierCheckbox.style.opacity = '0.5';
         tradeNotifierRow.style.opacity = '0.5';
@@ -396,7 +392,7 @@
         return btn;
       }
 
-      // Tier buttons (all currently point to the provided gamepass URL)
+      // Tier buttons
       const tier1Url = 'https://www.pekora.zip/catalog/436966/KoGold-Tier-1';
       const tier2Url = 'https://www.pekora.zip/catalog/436968/KoGold-Tier-2';
       const tier3Url = 'https://www.pekora.zip/catalog/436970/KoGold-Tier-3';
@@ -409,7 +405,7 @@
       tierRow.appendChild(tier3Btn);
       supportDiv.appendChild(tierRow);
 
-      // Ownership check (best-effort)
+      // Ownership check
       (async function checkOwnership() {
         try {
           // get authenticated user id
@@ -421,12 +417,11 @@
 
           async function checkAssetOwned(assetId) {
             try {
-              // Best-effort ownership endpoint similar to Roblox
+              // Best-effort ownership endpoint
               const url = `https://www.pekora.zip/ownership/hasasset?userId=${userId}&assetId=${assetId}`;
               const r = await fetch(url, { credentials: 'include' });
               if (!r.ok) return false;
               const txt = await r.text();
-              // endpoint may return plain true/false or JSON
               if (txt.trim() === 'true') return true;
               if (txt.trim() === 'false') return false;
               try { const j = JSON.parse(txt); return !!j; } catch { return false; }
@@ -518,7 +513,6 @@
       panel.appendChild(mainContainer);
       document.body.appendChild(panel);
       
-      // Make backdrop clickable to close panel
       backdrop.addEventListener('click', () => {
         panel.style.display = 'none';
         backdrop.style.display = 'none';
@@ -531,7 +525,6 @@
       const panel = createPanel(); 
       const backdrop = document.getElementById('kogold-backdrop');
       if (panel.style.display === 'none') {
-        // ensure no content list is shown by default
         document.querySelectorAll('[id$="-list"]').forEach(el => el.style.display = 'none');
         panel.style.display = 'flex';
         if (backdrop) backdrop.style.display = 'block';
@@ -547,9 +540,7 @@
       const li = document.createElement('li'); li.className = 'kogold-item';
       const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'kogold-button'; btn.textContent = 'KoGold';
       btn.style.color = '#ffd166'; btn.style.clear = 'both'; btn.style.width = '100%'; btn.style.border = 'none'; btn.style.cursor = 'pointer'; btn.style.display = 'block'; btn.style.padding = '10px 12px'; btn.style.fontSize = '16px'; btn.style.background = 'transparent'; btn.style.textAlign = 'left'; btn.style.lineHeight = '1.42857'; btn.style.userSelect = 'none'; btn.style.whiteSpace = 'nowrap'; btn.style.textDecoration = 'none';
-      // Use capturing pointerdown to open the panel immediately and prevent other handlers
       btn.addEventListener('pointerdown', function (e) { e.stopPropagation(); e.preventDefault(); if (e.stopImmediatePropagation) e.stopImmediatePropagation(); togglePanelForButton(); }, true);
-      // also handle keyboard activation
       btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePanelForButton(); } });
       li.appendChild(btn); ul.appendChild(li);
     }
@@ -563,7 +554,6 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', scanAndInject); else scanAndInject();
     new MutationObserver((mutations)=>{ for (const m of mutations) m.addedNodes.forEach(node => { if (node && node.querySelectorAll) scanAndInject(); }); }).observe(document.body, { childList: true, subtree: true });
 
-    // expose for manual toggling
     window.KoGold_togglePanel = togglePanelForButton;
     window.KoGold_createPanel = createPanel;
     window.KoGold_addKoGoldToUl = addKoGoldToUl;

@@ -11,13 +11,11 @@
 
       let targetDiv = candidates[0];
       
-      // Ensure the main target is styled and moved
       try {
         targetDiv.style.width = "100%";
         targetDiv.style.maxWidth = "100%";
         targetDiv.style.flex = "0 0 100%";
 
-        // Move the element to just before the profile container
         if (!targetDiv.dataset.kogoldMoved) {
           profileContainer.before(targetDiv);
           targetDiv.dataset.kogoldMoved = '1';
@@ -27,10 +25,9 @@
         console.error('[KoGold] moveContainer styling/move error:', e);
       }
 
-      // Hide any duplicate candidate elements that remain elsewhere in the DOM
       try {
         candidates.forEach((el, idx) => {
-          if (idx === 0) return; // keep the moved one
+          if (idx === 0) return;
           if (el.dataset.kogoldHidden) return;
           try {
             el.dataset.kogoldHidden = '1';
@@ -51,7 +48,6 @@
 
   moveContainer();
 
-  // Periodic check to ensure the container stays moved (in case DOM resets)
   setInterval(moveContainer, 3000);
 })();
 
@@ -95,7 +91,6 @@
     subtree: true,
   });
 
-  // Periodic check to ensure width styles stick
   setInterval(applyWidthOnly, 3000);
 })();
 

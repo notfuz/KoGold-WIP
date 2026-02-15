@@ -2,7 +2,7 @@
 
 window.CONTAINER_EDITS = [
   {
-    selector: "body", // CSS selector
+    selector: "body",
     styles: {
       backgroundColor: "rgba(255, 255, 255, 1)",
       background: "url(https://imgur.com/9ncCjcg.png)"

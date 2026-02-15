@@ -270,19 +270,16 @@
     }, 100);
   }
 
-  // Create a persistent mutation observer that reapplies both settings
   const persistenceObserver = new MutationObserver(() => {
     debouncedReapply();
   });
 
-  // Watch for changes and reapply settings
   function startPersistence() {
     persistenceObserver.observe(document.body, {
       childList: true,
       subtree: true
     });
 
-    // Aggressive periodic check - reapply every 2 seconds
     persistenceTimer = setInterval(() => {
       if (localStorage.getItem('kogold:avatarTweaks') === 'true' && onAvatar()) {
         initAvatarTweaks();
@@ -292,7 +289,6 @@
       }
     }, 2000);
 
-    // Also check on page visibility change (when coming back to tab)
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) {
         if (localStorage.getItem('kogold:avatarTweaks') === 'true' && onAvatar()) {
@@ -319,7 +315,7 @@
       }
     }
 
-    // Apply ad removal if enabled (default is true)
+    // Apply ad removal if enabled
     if (localStorage.getItem('kogold:removeAds') !== 'false') {
       applyAdRemoval();
     }

@@ -56,10 +56,8 @@
     } else { normalizeIconClasses(); applyPaw(); }
     new MutationObserver(() => { normalizeIconClasses(); applyPaw(); }).observe(document.body, { childList: true, subtree: true });
 
-    // Periodic check to ensure paw icon keeps applying
     setInterval(() => { normalizeIconClasses(); applyPaw(); }, 3000);
 
-    // Reapply on common interactions
     ['click', 'focus', 'scroll'].forEach(event => {
       document.addEventListener(event, () => {
         setTimeout(() => { normalizeIconClasses(); applyPaw(); }, 100);
