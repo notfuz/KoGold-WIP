@@ -26,9 +26,9 @@ I am planning on mergin an existing trading extention made by arz (owner of koro
 * And so on
 
 # Known Bugs:
-* Avatar bug when opening player creations on profile
-* KoGold button needing too be clicked twice the first time before opening normaly
+* Avatar bug when opening player creations on profile (fixed)
+* KoGold button needing too be clicked twice the first time before opening normaly (fixed)
 * KoGold button appearing in the dropdown box on a player profile
 * Avatar items search bugging out when used
-* Api Purchase not working with tix priced items
+* Api Purchase not working with tix priced items (Scrapped because of the new api verification needed to buy stuff)
 * Account Viewer not displaying Friends count and RAP count
